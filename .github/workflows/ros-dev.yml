@@ -12,4 +12,4 @@ jobs:
                           shell: powershell
 
                         - name: Run Railway Operation Simulator Executable
-                          run: ".\RailwayOperationSimulator\Release v2.5.1\Railway\\railway.exe"
+                          run: ".\\RailwayOperationSimulator\\Release v2.5.1\\Railway\\railway.exe"
