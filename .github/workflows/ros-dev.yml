@@ -1,19 +1,40 @@
 name: ROSCIDev
 on: [push]
 jobs:
-        ci-test:
-                name: ROS CI Test
-                runs-on: windows-latest
-                steps:
-                        - uses: actions/checkout@v2
+  ci-test:
+    name: ROS CI Test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
 
-                        - name: Download Latest Release
-                          run: .\scripts\test.ps1
-                          shell: powershell
+      - name: Download Latest Release
+        run: .\scripts\test.ps1
+        shell: powershell
 
-                        - name: Run Railway Operation Simulator
-                          run: .\RailwayOperationSimulator\Release_v_2_5_1\Railway\railway.exe
+      - name: Run Railway Operation Simulator
+        run: .\RailwayOperationSimulator\Release_v_2_5_1\Railway\railway.exe
 
-                        - name: Check Directories
-                          run: "Get-ChildItem ."
-                          shell: powershell {0} 
+      - name: Check Directories
+        run: "Get-ChildItem ."
+        shell: powershell {0}
+  
+  container-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      - name: Login to GitHub Package Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ros-ci:latest
