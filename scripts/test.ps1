@@ -9,7 +9,3 @@ $wc.DownloadFile($url, $output)
 
 Expand-Archive -LiteralPath $output
 
-Get-ChildItem .
-Get-ChildItem .\RailwayOperationSimulator
-
-Get-ChildItem .\RailwayOperationSimulator\Railway
