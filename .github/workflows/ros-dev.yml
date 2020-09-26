@@ -13,3 +13,7 @@ jobs:
 
                         - name: Run Railway Operation Simulator
                           run: .\RailwayOperationSimulator\Release_v_2_5_1\Railway\railway.exe
+
+                        - name: Check Directories
+                          run: "Get-ChildItem ."
+                          shell: powershell {0} 
