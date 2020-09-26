@@ -39,15 +39,15 @@ jobs:
              git config --global user.email "test@ros.sim"
              git config --global user.name "github-ros-user"
              git init
-             cp ../test_ttbs/fork.ttb timetables/
+             cp ../test_ttbs/fork.ttb timetables/test.ttb
              git add timetables/*.ttb
              git commit -m "Initial version"
              git checkout -b dev
-             cp ../test_ttbs/dev.ttb timetables/
+             cp ../test_ttbs/dev.ttb timetables/test.ttb
              git add -u
              git commit -m "Development version"
              git checkout master
-             cp ../test_ttbs/master.ttb timetables/
+             cp ../test_ttbs/master.ttb timetables/test.ttb
              git add -u 
              git commit -m "Master modified version"
              git checkout dev
