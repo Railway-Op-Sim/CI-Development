@@ -11,5 +11,5 @@ Expand-Archive -LiteralPath $output
 
 Get-ChildItem .\RailwayOperationSimulator
 
-Copy_item -Path '.\RailwayOperationSimulator\Release v2.5.1' '.\RailwayOperationSimulator\Release_v_2_5_1' -Recurse
+Copy-Item -Path '.\RailwayOperationSimulator\Release v2.5.1' '.\RailwayOperationSimulator\Release_v_2_5_1' -Recurse
 Remove-Item -Recurse -Force '.\RailwayOperationSimulator\Release v2.5.1'
