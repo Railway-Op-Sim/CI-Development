@@ -9,3 +9,4 @@ $wc.DownloadFile($url, $output)
 
 Expand-Archive -LiteralPath $output
 
+.\RailwayOperationSimulator\Release v2.5.1\Railway\railway.exe
