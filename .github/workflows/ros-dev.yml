@@ -10,3 +10,6 @@ jobs:
                         - name: Run Download
                           run: .\scripts\test.ps1
                           shell: powershell
+
+                        - name: Run Railway Operation Simulator Executable
+                          run: .\RailwayOperationSimulator\Railway\railway.exe
