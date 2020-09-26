@@ -1,0 +1,12 @@
+name: ROSCIDev
+on: [push]
+jobs:
+        ci-test:
+                name: ROS CI Test
+                runs-on: windows-latest
+                steps:
+                        - use: actions/checkout@v2
+
+                        - name: Run Download
+                          run: .\scripts\test.ps1
+                          shell: powershell
