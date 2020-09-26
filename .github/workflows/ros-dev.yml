@@ -20,6 +20,7 @@ jobs:
 
   test_ci_image:
     name: Test Docker Image
+    runs-on: ubuntu-latest
     container:
       image: artemisbeta/railwayopsim-ci:latest
       env:
@@ -27,7 +28,8 @@ jobs:
           LANG : 'en_GB.UTF-8' 
           LANGUAGE : 'en_GB:en' 
           LC_ALL : 'en_GB.UTF-8'
-      
+    
+    steps:
       - uses: actions/checkout@v2
 
       - name: Create Dummy Repository
