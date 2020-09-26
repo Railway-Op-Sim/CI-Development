@@ -5,3 +5,7 @@ $output = "RailwayOperationSimulator.zip"
 $wc = New-Object System.Net.WebClient
 
 $wc.DownloadFile($url, $output)
+
+Expand-Archive -LiteralPath $output
+
+Get-ChildItem .
