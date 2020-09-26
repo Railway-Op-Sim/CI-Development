@@ -7,6 +7,9 @@ jobs:
                 steps:
                         - uses: actions/checkout@v2
 
-                        - name: Download and Run Railway Operation Simulator
+                        - name: Download Latest Release
                           run: .\scripts\test.ps1
                           shell: powershell
+
+                        - name: Run Railway Operation Simulator
+                          run: .\RailwayOperationSimulator\Release_v_2_5_1\Railway\railway.exe
