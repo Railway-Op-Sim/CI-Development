@@ -53,4 +53,6 @@ jobs:
              git checkout dev
       
       - name: Run MR Check Script
-        run: git_merge_ttb
+        run: |
+              cd dummy_repo
+              git_merge_ttb
