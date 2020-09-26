@@ -36,6 +36,8 @@ jobs:
         run: |
              mkdir -p dummy_repo/timetables
              cd dummy_repo
+             git config --global user.email "test@ros.sim"
+             git config --global user.name "github-ros-user"
              git init
              cp ../test_ttbs/fork.ttb timetables/
              git add timetables/*.ttb
