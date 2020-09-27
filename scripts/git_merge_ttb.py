@@ -205,7 +205,9 @@ class GitTTBMerge(object):
                                  '"Automated Commit: Merge of file ' +
                                  '\'{}\' from branch \'{}\'"'.format(self._ttb_file,
                                                      self._current_branch)])
-                
+                subprocess.call(['git', 'log', '-1'])
+                subprocess.call(['git', 'push', 'origin', self._current_branch],
+                                stdout=open(os.devnull, 'wb'))
 
         sys.exit(_return_status)
          
