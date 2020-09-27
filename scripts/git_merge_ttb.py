@@ -66,7 +66,7 @@ class GitRepo(object):
             _lines = F.readlines()
             if '<<<<' not in ''.join(_lines):
                 self._logger.info("No Conflicts Found")
-                return False
+                return 0, "**Changes Compatible with master branch**"
             _sections = []
             _part = []
             _lines_str = []
@@ -80,11 +80,12 @@ class GitRepo(object):
                     _part.append('\n'.join(_lines_str))
                     _sections.append(_part)
                 else:
-                    _lines_str.append(line) 
-            print(tabulate.tabulate(_sections,
-                                    headers = ['master', branch_name],
-                                    tablefmt='fancy_grid'))
-            return True
+                    _lines_str.append(line)
+            _out_str = "**Merge Conflicts Found**\n"
+            _out_str += tabulate.tabulate(_sections,
+                                          headers = ['master', branch_name],
+                                          tablefmt='github').__str__()+"\n"
+            return _out_str
 
     def get_result(self) -> List[str]:
         self._logger.info("Retrieving combined TTB file")
@@ -214,13 +215,17 @@ class GitTTBMerge(object):
 
             g.merge('dev')
 
-            _return_status = g.get_conflicts(self._current_branch)
+            _return_status, _result = g.get_conflicts(self._current_branch)
 
             if _return_status == 0:
                 _output = g.get_result()[0]
 
         subprocess.call(['git', 'branch', '-D', 'temp_branch'],
                         stdout=open(os.devnull, 'wb'))
+
+        os.mkdir('mr_check_output')
+        with open('mr_check_output/mr-result.md', 'w') as f:
+            f.write(_result)
 
         if _return_status == 0 and not self._no_overwrite:
             with open(self._ttb_file, 'w') as f:
