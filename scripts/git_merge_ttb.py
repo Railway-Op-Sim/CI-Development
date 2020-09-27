@@ -15,8 +15,10 @@ class GitTTBException(Exception):
 
 
 class GitRepo(object):
-    def __init__(self, directory_name: str = 'temp_git'):
+    def __init__(self, files_list: List[str] = ['test.ttb'],
+                 directory_name: str = 'temp_git'):
         self._root = os.getcwd()
+        self._files = files_list
         self._dir_name = directory_name
 
     def __enter__(self):
@@ -41,8 +43,8 @@ class GitRepo(object):
     def merge(self, branch_to_merge):
         subprocess.call(['git', 'merge', branch_to_merge])
 
-    def get_conflicts(self, branch_name, files_list=['temp.ttb']) -> bool:
-        for f in files_list:
+    def get_conflicts(self, branch_name) -> bool:
+        for f in self._files:
             with open(f) as F:
                 _lines = F.readlines()
                 if '<<<<' not in ''.join(_lines):
@@ -66,7 +68,13 @@ class GitRepo(object):
                                         tablefmt='fancy_grid'))
                 return True
 
+    def get_result(self) -> List[str]:
+        _results = []
 
+        for f in self._files:
+            with open(f) as F:
+                _results.append(F.readlines())
+        return _results
 
     def commit(self, message, include='*.ttb'):
         subprocess.call(['git', 'add', include],
@@ -79,6 +87,7 @@ class GitTTBMerge(object):
         self._repository = git.Repo(os.getcwd())
         self._current_branch = self._repository.active_branch.name
         self._ttb_file = ttb_file
+        self._check_latest_commit_automated()
 
     def _count_ttb_commits(self, branch_name: Optional[str] = None):
         if branch_name:
@@ -92,6 +101,12 @@ class GitTTBMerge(object):
                             stdout=open(os.devnull, 'wb'))
         return int(count)
 
+    def _check_latest_commit_automated(self):
+        _user = subprocess.check_output("git log -1 --pretty=format:'%an'",
+                                        text=True)
+        if _user == "Automated Commit: ROS CI":
+            exit(0)
+
     def _unpack_ttb(self) -> str:
         if not os.path.exists(self._ttb_file):
             raise FileNotFoundError("Could not find file '" +
@@ -101,9 +116,9 @@ class GitTTBMerge(object):
         with open(self._ttb_file) as f:
             _line = f.readlines()[0]
 
-        _lines = '\n'.join(_line.split('\x00'))
+        _lines = '\n'.join([i+'NULL' for i in _line.split('\x00')])
 
-        return '\n'.join(_lines.split(','))
+        return '\n'.join([i+'COMMA' for i in _lines.split(',')])
 
     def _get_source_node_commit(self,
                                 master_branch: Optional[str] = 'master') -> str:
@@ -133,6 +148,10 @@ class GitTTBMerge(object):
             subprocess.call(['git', 'checkout', self._current_branch],
                             stdout=open(os.devnull, 'wb'))
         return _version
+
+    def _rebuild(self, output_str: str):
+        output_str = output_str.replace('NULL', '\x00').replace('COMMA', ',')
+        return output_str
 
     def attempt_merge(self):
         self._checkout_commit_to_branch(self._get_source_node_commit())
@@ -166,14 +185,30 @@ class GitTTBMerge(object):
 
             g.merge('dev')
 
+            _output = g.get_result()[0]
+
             _return_status = g.get_conflicts(self._current_branch)
 
         subprocess.call(['git', 'branch', '-D', 'temp_branch'],
                         stdout=open(os.devnull, 'wb'))
-        sys.exit(_return_status)
 
-        
-            
+
+        if _return_status == 0:
+            with open(self._ttb_file, 'w') as f:
+                f.write(self._rebuild(_output))
+                subprocess.call(['git', 'config', '--global', 'user.name',
+                                 '"Automated Commit: ROS CI"'])
+                subprocess.call(['git', 'config', '--global', 'user.email',
+                                 'noreply@unreal-email.com'])
+                subprocess.call(['git', 'add', '-u'], stdout=open(os.devnull, 'wb'))
+                subprocess.call(['git', 'commit', '-m',
+                                 '"Automated Commit: Merge of file ' +
+                                 '\'{}\' from branch \'{}\'"'.format(self._ttb_file,
+                                                     self._current_branch)])
+                
+
+        sys.exit(_return_status)
+         
 
 if __name__ in "__main__":
     import argparse
