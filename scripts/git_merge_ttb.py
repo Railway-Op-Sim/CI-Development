@@ -193,9 +193,9 @@ class GitTTBMerge(object):
         if _return_status == 0:
             with open(self._ttb_file, 'w') as f:
                 f.write(self._rebuild(_output))
-                subprocess.call(['git', 'config', '--global', 'user.name',
+                subprocess.call(['git', 'config', 'user.name',
                                  '"Automated Commit: ROS CI"'])
-                subprocess.call(['git', 'config', '--global', 'user.email',
+                subprocess.call(['git', 'config', 'user.email',
                                  'noreply@unreal-email.com'])
                 subprocess.call(['git', 'add', '-u'], stdout=open(os.devnull, 'wb'))
                 subprocess.call(['git', 'commit', '-m',
