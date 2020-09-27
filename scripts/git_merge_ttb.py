@@ -105,6 +105,7 @@ class GitTTBMerge(object):
         _user = subprocess.check_output("git log -1 --pretty=format:'%an'",
                                         text=True)
         if _user == "Automated Commit: ROS CI":
+            print("Latest commit is automated, cancelling run.")
             exit(0)
 
     def _unpack_ttb(self) -> str:
