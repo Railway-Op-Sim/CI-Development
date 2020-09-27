@@ -60,6 +60,13 @@ class GitRepo(object):
         self._logger.info("Merging chnges into '%s'", branch_to_merge)
         subprocess.call(['git', 'merge', branch_to_merge])
 
+    def diff(self, branch_name: str) -> str:
+        _diff = subprocess.check_output(['git', 'diff', 'master', branch_name,
+                                        '--', self._ttb_file],
+                                        text=True)
+        self._logger.info("Fetching Diff:\n %s", _diff)
+        return _diff
+
     def get_conflicts(self, branch_name) -> bool:
         self._logger.info("Finding conflicts after attempted merge")
         with open(self._ttb_file) as F:
@@ -135,6 +142,7 @@ class GitTTBMerge(object):
         if _user == "Automated Commit: ROS CI":
             print("Latest commit is automated, cancelling run.")
             exit(0)
+            
 
     def _unpack_ttb(self) -> str:
         if not os.path.exists(self._ttb_file):
@@ -213,6 +221,8 @@ class GitTTBMerge(object):
 
             g.commit('Master branch updates applied')
 
+            _diff = g.diff(self._current_branch)
+
             g.merge('dev')
 
             _return_status, _result = g.get_conflicts(self._current_branch)
@@ -225,6 +235,7 @@ class GitTTBMerge(object):
 
         os.mkdir('mr_check_output')
         with open('mr_check_output/mr-result.md', 'w') as f:
+            _result += '\n\n**Differences**\n```diff\n' + _diff + "\n```\n"
             f.write(_result)
 
         if _return_status == 0 and not self._no_overwrite:
