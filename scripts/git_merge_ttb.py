@@ -193,18 +193,14 @@ class GitTTBMerge(object):
         subprocess.call(['git', 'branch', '-D', 'temp_branch'],
                         stdout=open(os.devnull, 'wb'))
 
-        print("STATUS: ", _return_status)
         if _return_status == 0:
             with open(self._ttb_file, 'w') as f:
-                print("Writing new file: ")
                 f.write(self._rebuild(_output))
-                print("Setting Git Name: ")
                 subprocess.call(['git', 'config', '--global', 'user.name',
                                  '"Automated Commit: ROS CI"'])
                 subprocess.call(['git', 'config', '--global', 'user.email',
                                  'noreply@unreal-email.com'])
                 subprocess.call(['git', 'add', '-u'], stdout=open(os.devnull, 'wb'))
-                print("Committing: ")
                 subprocess.call(['git', 'commit', '-m',
                                  '"Automated Commit: Merge of file ' +
                                  '\'{}\' from branch \'{}\'"'.format(self._ttb_file,
