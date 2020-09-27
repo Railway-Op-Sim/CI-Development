@@ -194,9 +194,9 @@ class GitTTBMerge(object):
             with open(self._ttb_file, 'w') as f:
                 f.write(self._rebuild(_output))
                 subprocess.call(['git', 'config', 'user.name',
-                                 '"Automated Commit: ROS CI"'])
+                                 '"github-actions"'])
                 subprocess.call(['git', 'config', 'user.email',
-                                 'noreply@unreal-email.com'])
+                                 'github-actions@github.com'])
                 subprocess.call(['git', 'add', '-u'], stdout=open(os.devnull, 'wb'))
                 subprocess.call(['git', 'commit', '-m',
                                  '"Automated Commit: Merge of file ' +
