@@ -2,12 +2,15 @@
 import os
 import subprocess
 import tabulate
+import logging
 import git
 import sys
 
 import glob
 from typing import List, Optional, Dict
 
+
+logging.basicConfig()
 
 class GitTTBException(Exception):
     def __init__(self, message):
@@ -16,24 +19,37 @@ class GitTTBException(Exception):
 
 class GitRepo(object):
     def __init__(self, ttb_file: str = 'temp.ttb',
-                 directory_name: str = 'temp_git'):
+                 directory_name: str = 'temp_git',
+                 temp_user: str = "github-actions",
+                 temp_email: str = "github-actions@github.com"):
         self._root = os.getcwd()
+        self._user = temp_user
+        self._email = temp_email
         self._ttb_file = ttb_file
         self._dir_name = directory_name
+        self._logger = logging.getLogger('TempGitRepo')
+        self._logger.setLevel('INFO')
 
     def __enter__(self):
+        self._logger.info("Initialising temporary Git repository '%s'", self._dir_name)
         os.mkdir(self._dir_name)
         os.chdir(self._dir_name)
         subprocess.call(['git', 'init'],
                          stdout=open(os.devnull, 'wb'))
+        subprocess.call(['git', 'config', 'user.name', self._user],
+                        stdout=open(os.devnull, 'wb'))
+        subprocess.call(['git', 'config', 'user.email', self._email],
+                        stdout=open(os.devnull, 'wb'))
         return self
 
     def __exit__(self, *args, **kwargs):
+        self._logger.info("Closing Git repository and deleting.")
         os.chdir(self._root)
         subprocess.call(['rm', '-rf', self._dir_name],
                          stdout=open(os.devnull, 'wb'))
 
     def switch_branch(self, branch_name, new=False):
+        self._logger.info("Switching to branch '%s'", branch_name)
         _args = ['git', 'checkout']
         if new:
             _args += ['-b']
@@ -41,12 +57,15 @@ class GitRepo(object):
         subprocess.call(_args, stdout=open(os.devnull, 'wb'))
 
     def merge(self, branch_to_merge):
+        self._logger.info("Merging chnges into '%s'", branch_to_merge)
         subprocess.call(['git', 'merge', branch_to_merge])
 
     def get_conflicts(self, branch_name) -> bool:
+        self._logger.info("Finding conflicts after attempted merge")
         with open(self._ttb_file) as F:
             _lines = F.readlines()
             if '<<<<' not in ''.join(_lines):
+                self._logger.info("No Conflicts Found")
                 return False
             _sections = []
             _part = []
@@ -61,28 +80,38 @@ class GitRepo(object):
                     _part.append('\n'.join(_lines_str))
                     _sections.append(_part)
                 else:
-                    _lines_str.append(line)
+                    _lines_str.append(line) 
             print(tabulate.tabulate(_sections,
                                     headers = ['master', branch_name],
                                     tablefmt='fancy_grid'))
             return True
 
     def get_result(self) -> List[str]:
+        self._logger.info("Retrieving combined TTB file")
         with open(self._ttb_file) as F:
             return '\n'.join(F.readlines())
 
     def commit(self, message, include='*.ttb'):
+        self._logger.info("Committing changes to local repository")
         subprocess.call(['git', 'add', include],
                          stdout=open(os.devnull, 'wb'))
         subprocess.call(['git', 'commit', '-m', message],
                          stdout=open(os.devnull, 'wb'))
 
 class GitTTBMerge(object):
-    def __init__(self, ttb_file: str):
+    def __init__(self, ttb_file: str, branch_name: Optional[str] = None,
+                do_not_overwrite: Optional[bool] = False):
+        self._no_overwrite = do_not_overwrite
         self._repository = git.Repo(os.getcwd())
-        self._current_branch = self._repository.active_branch.name
+        if self._repository.head.is_detached:
+            self._checkout_temp()
+        self._current_branch = branch_name if branch_name else self._repository.active_branch.name
+        if self._current_branch == 'master':
+            print("Current branch is 'master', no tests will be run")
+            exit(0)
         self._ttb_file = ttb_file
         self._check_latest_commit_automated()
+        # self._fetch_master_locally()
 
     def _count_ttb_commits(self, branch_name: Optional[str] = None):
         if branch_name:
@@ -95,6 +124,9 @@ class GitTTBMerge(object):
             subprocess.call(['git', 'checkout', self._current_branch],
                             stdout=open(os.devnull, 'wb'))
         return int(count)
+
+    def _fetch_master_locally(self, master_branch: Optional[str] = 'master') -> None:
+        subprocess.call(['git', 'fetch', 'origin', '{m}:{m}'.format(m=master_branch)])
 
     def _check_latest_commit_automated(self):
         _user = subprocess.check_output(["git log", "-1 --pretty=format:'%an'"],
@@ -121,7 +153,7 @@ class GitTTBMerge(object):
         _commit_id = subprocess.check_output(['git',
                                               'merge-base',
                                               master_branch,
-                                              self._current_branch], text=True,
+                                              self._current_branch], text=True
                                               )
         return _commit_id.replace('\n', '')
 
@@ -190,7 +222,7 @@ class GitTTBMerge(object):
         subprocess.call(['git', 'branch', '-D', 'temp_branch'],
                         stdout=open(os.devnull, 'wb'))
 
-        if _return_status == 0:
+        if _return_status == 0 and not self._no_overwrite:
             with open(self._ttb_file, 'w') as f:
                 f.write(self._rebuild(_output))
                 subprocess.call(['git', 'config', 'user.name',
@@ -214,11 +246,18 @@ if __name__ in "__main__":
 
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('originbranch', help='Current branch name')
     parser.add_argument('--ttb-path', help='Location of ttb files',
                         default = '*')
+    parser.add_argument('--soft', help='Test merge but do not overwrite',
+                        action='store_true')
 
-    _loc = parser.parse_args().ttb_path
+    args = parser.parse_args()
+
+    _branch = args.originbranch
+    _loc = args.ttb_path
+    _soft = args.soft
 
     for f in glob.glob(os.path.join(_loc, '*.ttb')):
         print("Processing file '{}':".format(f))
-        GitTTBMerge(f).attempt_merge()
+        GitTTBMerge(f, _branch, _soft).attempt_merge()
