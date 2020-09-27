@@ -57,7 +57,7 @@ jobs:
               cd dummy_repo
               git_merge_ttb
 
-test_ci_image_merge_pass:
+  test_ci_image_merge_pass:
     name: Test Docker Image
     runs-on: ubuntu-latest
     container:
