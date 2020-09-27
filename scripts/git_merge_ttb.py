@@ -193,7 +193,7 @@ class GitTTBMerge(object):
         subprocess.call(['git', 'branch', '-D', 'temp_branch'],
                         stdout=open(os.devnull, 'wb'))
 
-
+        print("STATUS: ", _return_status)
         if _return_status == 0:
             with open(self._ttb_file, 'w') as f:
                 print("Writing new file: ")
