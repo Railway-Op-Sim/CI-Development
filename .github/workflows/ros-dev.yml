@@ -19,7 +19,7 @@ jobs:
         shell: powershell {0}
 
   test_ci_image_merge_fail:
-    name: Test Docker Image
+    name: Test Docker Image - MR Fail
     runs-on: ubuntu-latest
     container:
       image: artemisbeta/railwayopsim-ci:latest
@@ -58,7 +58,7 @@ jobs:
               git_merge_ttb
 
   test_ci_image_merge_pass:
-    name: Test Docker Image
+    name: Test Docker Image - MR Pass
     runs-on: ubuntu-latest
     container:
       image: artemisbeta/railwayopsim-ci:latest
