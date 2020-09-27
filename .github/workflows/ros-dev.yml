@@ -18,7 +18,7 @@ jobs:
         run: "Get-ChildItem ."
         shell: powershell {0}
 
-  test_ci_image:
+  test_ci_image_merge_fail:
     name: Test Docker Image
     runs-on: ubuntu-latest
     container:
@@ -48,6 +48,45 @@ jobs:
              git commit -m "Development version"
              git checkout master
              cp ../test_ttbs/master.ttb timetables/test.ttb
+             git add -u 
+             git commit -m "Master modified version"
+             git checkout dev
+      
+      - name: Run MR Check Script
+        run: |
+              cd dummy_repo
+              git_merge_ttb
+
+test_ci_image_merge_pass:
+    name: Test Docker Image
+    runs-on: ubuntu-latest
+    container:
+      image: artemisbeta/railwayopsim-ci:latest
+      env:
+          DEBIAN_FRONTEND : noninteractive
+          LANG : 'en_GB.UTF-8' 
+          LANGUAGE : 'en_GB:en' 
+          LC_ALL : 'en_GB.UTF-8'
+    
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create Dummy Repository
+        run: |
+             mkdir -p dummy_repo/timetables
+             cd dummy_repo
+             git config --global user.email "test@ros.sim"
+             git config --global user.name "github-ros-user"
+             git init
+             cp ../test_ttbs/fork.ttb timetables/test.ttb
+             git add timetables/*.ttb
+             git commit -m "Initial version"
+             git checkout -b dev
+             cp ../test_ttbs/dev.ttb timetables/test.ttb
+             git add -u
+             git commit -m "Development version"
+             git checkout master
+             cp ../test_ttbs/master_pass.ttb timetables/test.ttb
              git add -u 
              git commit -m "Master modified version"
              git checkout dev
