@@ -15,10 +15,10 @@ class GitTTBException(Exception):
 
 
 class GitRepo(object):
-    def __init__(self, files_list: List[str] = ['test.ttb'],
+    def __init__(self, ttb_file: str = 'temp.ttb',
                  directory_name: str = 'temp_git'):
         self._root = os.getcwd()
-        self._files = files_list
+        self._ttb_file = ttb_file
         self._dir_name = directory_name
 
     def __enter__(self):
@@ -44,37 +44,32 @@ class GitRepo(object):
         subprocess.call(['git', 'merge', branch_to_merge])
 
     def get_conflicts(self, branch_name) -> bool:
-        for f in self._files:
-            with open(f) as F:
-                _lines = F.readlines()
-                if '<<<<' not in ''.join(_lines):
-                    return False
-                _sections = []
-                _part = []
-                _lines_str = []
-                for line in _lines:
-                    if '<<<' in line:
-                        continue
-                    elif '====' in line:
-                        _part.append('\n'.join(_lines_str))
-                        _lines_str = []
-                    elif '>>>' in line:
-                        _part.append('\n'.join(_lines_str))
-                        _sections.append(_part)
-                    else:
-                        _lines_str.append(line)
-                print(tabulate.tabulate(_sections,
-                                        headers = ['master', branch_name],
-                                        tablefmt='fancy_grid'))
-                return True
+        with open(self._ttb_file) as F:
+            _lines = F.readlines()
+            if '<<<<' not in ''.join(_lines):
+                return False
+            _sections = []
+            _part = []
+            _lines_str = []
+            for line in _lines:
+                if '<<<' in line:
+                    continue
+                elif '====' in line:
+                    _part.append('\n'.join(_lines_str))
+                    _lines_str = []
+                elif '>>>' in line:
+                    _part.append('\n'.join(_lines_str))
+                    _sections.append(_part)
+                else:
+                    _lines_str.append(line)
+            print(tabulate.tabulate(_sections,
+                                    headers = ['master', branch_name],
+                                    tablefmt='fancy_grid'))
+            return True
 
     def get_result(self) -> List[str]:
-        _results = []
-
-        for f in self._files:
-            with open(f) as F:
-                _results.append(F.readlines())
-        return _results
+        with open(self._ttb_file) as F:
+            return '\n'.join(F.readlines())
 
     def commit(self, message, include='*.ttb'):
         subprocess.call(['git', 'add', include],
@@ -102,8 +97,8 @@ class GitTTBMerge(object):
         return int(count)
 
     def _check_latest_commit_automated(self):
-        _user = subprocess.check_output("git log -1 --pretty=format:'%an'",
-                                        text=True)
+        _user = subprocess.check_output(["git log", "-1 --pretty=format:'%an'"],
+                                        text=True, shell=True)
         if _user == "Automated Commit: ROS CI":
             print("Latest commit is automated, cancelling run.")
             exit(0)
@@ -150,8 +145,9 @@ class GitTTBMerge(object):
                             stdout=open(os.devnull, 'wb'))
         return _version
 
-    def _rebuild(self, output_str: str):
+    def _rebuild(self, output_str: str) -> str:
         output_str = output_str.replace('NULL', '\x00').replace('COMMA', ',')
+        output_str = output_str.replace('\n','')
         return output_str
 
     def attempt_merge(self):
@@ -186,9 +182,10 @@ class GitTTBMerge(object):
 
             g.merge('dev')
 
-            _output = g.get_result()[0]
-
             _return_status = g.get_conflicts(self._current_branch)
+
+            if _return_status == 0:
+                _output = g.get_result()[0]
 
         subprocess.call(['git', 'branch', '-D', 'temp_branch'],
                         stdout=open(os.devnull, 'wb'))
