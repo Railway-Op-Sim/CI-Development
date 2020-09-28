@@ -221,7 +221,7 @@ class GitTTBMerge(object):
 
             g.commit('Master branch updates applied')
 
-            _diff = g.diff(self._current_branch)
+            _diff = g.diff(self._current_branch).replace('COMMA', '').replace('NULL','\n')
 
             g.merge('dev')
 
@@ -235,7 +235,7 @@ class GitTTBMerge(object):
 
         os.mkdir('mr_check_output')
         with open('mr_check_output/mr-result.md', 'w') as f:
-            _result += '\n\n**Differences**\n```diff\n' + _diff + "\n```\n"
+            _result += '\n\n**Differences**\n```diff\n' + _diff + "\n```\n\n"
             f.write(_result)
 
         if _return_status == 0 and not self._no_overwrite:

@@ -55,7 +55,7 @@ jobs:
       - name: Run MR Check Script
         run: |
               cd dummy_repo
-              git_merge_ttb
+              git_merge_ttb --soft --ttb-path . dev
 
   test_ci_image_merge_pass:
     name: Test Docker Image - MR Pass
@@ -94,4 +94,4 @@ jobs:
       - name: Run MR Check Script
         run: |
               cd dummy_repo
-              git_merge_ttb
+              git_merge_ttb --soft --ttb-path . dev
