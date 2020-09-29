@@ -24,18 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Unpack Checker
-        run: Expand-Archive -LiteralPath 'software\TimetableChecker.zip'
-        shell: powershell {0}
-
-      - name: Copy Examples to Current Directory
-        run: |
-              Copy-Item -Path 'test_ttbs\master.ttb' 'test.ttb'
-              Copy-Item -Path 'test_rlys\railway.rly' 'railway.rly'
-
-      - name: Run Timetable Checker on Test Files
-        run: .\TimetableChecker\TimetableChecker\TimetableChecker.exe
-        shell: powershell {0}
+      - name: Run Timetable Validator
+        run: .\scripts\ttb_check.ps1
+        shell: powershell
 
   test_ci_image_merge_fail:
     name: Test Docker Image - MR Fail
