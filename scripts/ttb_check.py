@@ -8,6 +8,9 @@ validation_result = parser.parse_args().input_file
 
 with open(validation_result) as f:
     lines = f.readlines()
+    if not lines:
+        print("Output of Validation was empty, cannot deduce result.")
+        exit(1)
     _exit_code = int(lines[0])
     _msg = '' if len(lines) == 1 else lines[1]
 
