@@ -27,6 +27,10 @@ jobs:
       - name: Unpack Checker
         run: Expand-Archive -LiteralPath 'software\TimetableChecker.zip'
         shell: powershell {0}
+        
+      - name: List Contents
+        run: Get-ChildItem .\TimetableChecker
+        shell: powershell {0}
 
       - name: Copy Examples to Current Directory
         run: |
