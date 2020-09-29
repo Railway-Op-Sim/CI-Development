@@ -24,7 +24,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run Timetable Validator
+      - name: Unpack Checker
+        run: Expand-Archive -LiteralPath 'software\TimetableChecker.zip'
+        shell: powershell 
+
+      - name: Copy Examples to Current Directory
+        run: |
+              Copy-Item -Path 'test_ttbs\master.ttb' 'test.ttb'
+              Copy-Item -Path 'test_rlys\railway.rly' 'railway.rly'
+
+      - name: Run Timetable Checker on Test Files
+        run: .\TimetableChecker\TimetableChecker\TimetableChecker.exe
+      
+      - name: Check Output
         run: .\scripts\ttb_check.ps1
         shell: powershell
 
