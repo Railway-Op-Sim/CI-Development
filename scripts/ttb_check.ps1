@@ -1,7 +1,7 @@
 Expand-Archive -LiteralPath 'software\TimetableChecker.zip'
 Copy-Item -Path 'test_ttbs\master.ttb' 'test.ttb'
 Copy-Item -Path 'test_rlys\railway.rly' 'railway.rly'
-.\TimetableChecker\TimetableChecker\TimetableChecker.exe
+& ".\TimetableChecker\TimetableChecker\TimetableChecker.exe"
 
 Get-ChildItem .
 
