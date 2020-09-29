@@ -3,7 +3,7 @@ Copy-Item -Path 'test_ttbs\master.ttb' 'test.ttb'
 Copy-Item -Path 'test_rlys\railway.rly' 'railway.rly'
 .\TimetableChecker\TimetableChecker\TimetableChecker.exe
 
-Expand-Archive -LiteralPath .
+Get-ChildItem .
 
 $result = cat .\Output.txt
 
