@@ -193,8 +193,16 @@ class GitTTBMerge(object):
 
     def attempt_merge(self):
         self._checkout_commit_to_branch(self._get_source_node_commit())
+        
+        # Need to handle case where there is no timetable on master yet!
+        try:
+            master = self._get_version('master')
+        except FileNotFoundError:
+            print('Timetable not found on master, no merge attempt required')
+            sys.exit(0)
+
         _versions = {
-            "master": self._get_version('master'),
+            "master": master,
             "dev": self._get_version(),
             "fork": self._get_version('temp_branch')
         }
