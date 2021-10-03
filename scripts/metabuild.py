@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('project_directory')
 parser.add_argument('--repo-name', help="Name of repository (if not same as folder)", default=None)
 parser.add_argument('--author', help='Name of recent commit author', default=None)
+parser.add_argument('--debug', help='Run in debug mode', default=False, action='store_true')
 
 args = parser.parse_args()
 
@@ -24,8 +25,13 @@ proj_dir = args.project_directory
 repo_name = args.repo_name or os.path.basename(os.path.abspath(proj_dir))
 author = args.author
 
+if args.debug:
+    logger.setLevel(logging.DEBUG)
+
 if '/' in repo_name:
     repo_name = os.path.split('/')[-1]
+
+logger.debug(f"Processing: repo_name={repo_name}, author={author}, proj_dir={proj_dir}")
 
 if not os.path.exists(proj_dir):
     raise FileNotFoundError(f"Cannot create metadata file, directory '{proj_dir}' does not exists")
