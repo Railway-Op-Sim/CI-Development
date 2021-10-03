@@ -5,6 +5,7 @@ import toml
 import glob
 import sys
 import logging
+import subprocess
 import os
 import re
 
@@ -16,14 +17,12 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('project_directory')
 parser.add_argument('--repo-name', help="Name of repository (if not same as folder)", default=None)
-parser.add_argument('--author', help='Name of recent commit author', default=None)
 parser.add_argument('--debug', help='Run in debug mode', default=False, action='store_true')
 
 args = parser.parse_args()
 
 proj_dir = args.project_directory
 repo_name = args.repo_name or os.path.basename(os.path.abspath(proj_dir))
-author = args.author
 
 if args.debug:
     logger.setLevel(logging.DEBUG)
@@ -31,7 +30,7 @@ if args.debug:
 if '/' in repo_name:
     repo_name = os.path.split('/')[-1]
 
-logger.debug(f"Processing: repo_name={repo_name}, author={author}, proj_dir={proj_dir}")
+logger.debug(f"Processing: repo_name={repo_name}, proj_dir={proj_dir}")
 
 if not os.path.exists(proj_dir):
     raise FileNotFoundError(f"Cannot create metadata file, directory '{proj_dir}' does not exists")
@@ -93,18 +92,38 @@ if 'display_name' not in metadata:
     metadata['display_name'] = repo_name.split('-', 1)[1].replace('-', ' ').title()
     logger.info(f"Set display name '{metadata['display_name']}'")
         
-if author: 
-    if 'author' not in metadata:
-        metadata['author'] = author
-        logger.info(f"Added author '{metadata['author']}'")
-    elif 'contributors' not in metadata:
-        metadata['contributors'] = [author]
-        logger.info(f"Added contributor '{metadata['contributors']}'")
-    else:
-        metadata['contributors'].append(author)
-        logger.info(f"Added contributor '{metadata['contributors']}'")
-        
-with open(data_file, 'w') as out_f:
+p = subprocess.Popen(['git', 'rev-list', '--max-parents=0', 'HEAD'], cwd=proj_dir, stdout=subprocess.PIPE,
+                     encoding='UTF-8')
+p.wait()
+
+if p.returncode == 0:
+    first_sha, _ = p.communicate()
+    p = subprocess.Popen(['git', '--no-pager' ,'show', '-s', '--format="%an"', first_sha.strip()], cwd=proj_dir,
+                         stdout=subprocess.PIPE, encoding='UTF-8')
+    p.wait()
+
+    if p.returncode == 0:
+        author, _ = p.communicate()
+        author = author.replace('"', '').strip()
+
+        if 'author' not in metadata:
+            metadata['author'] = author
+
+p = subprocess.Popen(['git', 'log', '-1', "--pretty=format:'%an'"], stdout=subprocess.PIPE, cwd=proj_dir,
+                     encoding='UTF-8')
+p.wait()
+
+if p.returncode == 0:
+    latest, _ = p.communicate()
+    latest = latest.replace("'", "").strip()
+
+    if latest != author:
+        if 'contributors' not in metadata:
+            metadata['contributors'] = []
+        metadata['contributors'].append(latest)
+
+
+with open(data_file, 'w', encoding="utf-8") as out_f:
     toml.dump(metadata, out_f)
     
 logger.info(f"Metadata written to '{os.path.join('$REPO_ROOT', 'Metadata', os.path.basename(data_file))}'")
