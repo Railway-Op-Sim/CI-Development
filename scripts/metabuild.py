@@ -28,7 +28,7 @@ if args.debug:
     logger.setLevel(logging.DEBUG)
 
 if '/' in repo_name:
-    repo_name = os.path.split('/')[-1]
+    repo_name = repo_name.split('/')[-1]
 
 logger.debug(f"Processing: repo_name={repo_name}, proj_dir={proj_dir}")
 
