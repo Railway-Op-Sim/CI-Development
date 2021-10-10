@@ -117,10 +117,11 @@ if p.returncode == 0:
     latest, _ = p.communicate()
     latest = latest.replace("'", "").strip()
 
-    if latest != author:
+    if latest != author and latest != metadata['author']:
         if 'contributors' not in metadata:
             metadata['contributors'] = []
-        metadata['contributors'].append(latest)
+        if latest not in metadata['contributors']:
+            metadata['contributors'].append(latest)
 
 
 with open(data_file, 'w', encoding="utf-8") as out_f:
