@@ -187,19 +187,8 @@ if p.returncode == 0:
         if 'author' not in metadata:
             metadata['author'] = author
 
-p = subprocess.Popen(['git', 'log', '-1', "--pretty=format:'%an'"], stdout=subprocess.PIPE, cwd=proj_dir,
-                     encoding='UTF-8')
-p.wait()
-
-if p.returncode == 0:
-    latest, _ = p.communicate()
-    latest = latest.replace("'", "").strip()
-
-    if latest != author and latest != metadata['author']:
-        if 'contributors' not in metadata:
-            metadata['contributors'] = []
-        if latest not in metadata['contributors']:
-            metadata['contributors'].append(latest)
+if "contributors" not in metadata:
+    metadata["contributors"] = []
 
 
 with open(data_file, 'w', encoding="utf-8") as out_f:
