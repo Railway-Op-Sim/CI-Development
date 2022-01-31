@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from curses import meta
 import datetime
 import toml
 import semver
@@ -39,29 +40,24 @@ if not os.path.exists(proj_dir):
 
 if not os.path.exists(os.path.join(proj_dir, 'Metadata')):
     os.makedirs(os.path.join(proj_dir, 'Metadata'))
- 
+
 rly_files = glob.glob(os.path.join(proj_dir, 'Railway', '*.rly'))
 rly_files += glob.glob(os.path.join(proj_dir, 'Railway', '*.dev'))
 
 if not rly_files:
     logger.info("No railway file found aborting.")
     sys.exit(0)
-    
+
 rly_name = os.path.splitext(os.path.basename(rly_files[0]))[0]
 
 logger.info(f"Using railway name '{rly_name}'")
- 
-data_file = os.path.join(proj_dir, 'Metadata', f'{rly_name}.toml')
- 
-if os.path.exists(data_file):
-    metadata = toml.load(data_file)
-else:
-    metadata = {}
-    
 
+data_file = os.path.join(proj_dir, 'Metadata', f'{rly_name}.toml')
+
+metadata = toml.load(data_file) if os.path.exists(data_file) else {}
 if 'rly_file' not in metadata:
     metadata['rly_file'] = f'{rly_name}.rly'
-    
+
 if 'ttb_files' not in metadata:
     ttb_files = glob.glob(os.path.join(proj_dir, 'Program_Timetables', '*.ttb'))
     if not ttb_files:
@@ -70,7 +66,7 @@ if 'ttb_files' not in metadata:
     elif 'ttb_files' not in metadata or not metadata['ttb_files']:
         metadata['ttb_files'] = [os.path.basename(t) for t in ttb_files]
         logger.info(f"Found timetable files {metadata['ttb_files']}")
-        
+
 if 'ssn_files' not in metadata:
     ssn_files = glob.glob(os.path.join(proj_dir, 'Sessions', '*.ssn'))
     if not ssn_files:
@@ -88,7 +84,7 @@ if 'graphic_files' not in metadata:
     elif 'graphic_files' not in metadata or not metadata['graphic_files']:
         metadata['graphic_files'] = [os.path.basename(s) for s in graphic_files]
         logger.info(f"Found graphic files {metadata['graphic_files']}")
-        if not 'minimum_required' in metadata:
+        if 'minimum_required' not in metadata:
             metadata['minimum_required'] = '2.4.0'
 
 if 'img_files' not in metadata:
@@ -114,6 +110,9 @@ if 'release_date' not in metadata:
     logger.info("Setting release date to '{release}'")
     metadata['release_date'] = release
 
+if 'factual' not in metadata:
+    metadata['factual'] = metadata['country_code'] not in ('FN', 'UN')
+
 
 def get_version():
     p = subprocess.Popen(['git', 'describe', '--abbrev=0', '--tags'], cwd=proj_dir,
@@ -124,9 +123,9 @@ def get_version():
     else:
         version = p.communicate().strip()
         retrieved, _ = version
-    
+
     version_current = metadata.get("version", None)
-    
+
     if version_current:
         try:
             semver_current = semver.VersionInfo(version_current)
@@ -155,21 +154,21 @@ def get_version():
 get_version()
 
 
-if re.findall(r'^(\w{2})\-', repo_name) and not 'country_code' in metadata:
+if re.findall(r'^(\w{2})\-', repo_name) and 'country_code' not in metadata:
     metadata['country_code'] = re.findall(r'^(\w{2})\-', repo_name)[0].upper()
     logger.info(f"Found country code '{metadata['country_code']}'")
 
 
 if 'description' not in metadata:
     metadata['description'] = ""
-    
+
 if 'display_name' not in metadata:
     metadata['display_name'] = repo_name.split('-', 1)[1].replace('-', ' ').title()
     logger.info(f"Set display name '{metadata['display_name']}'")
 
 if 'name' not in metadata:
     metadata['name'] = metadata['display_name']
-        
+
 p = subprocess.Popen(['git', 'rev-list', '--max-parents=0', 'HEAD'], cwd=proj_dir, stdout=subprocess.PIPE,
                      encoding='UTF-8')
 p.wait()
@@ -180,12 +179,12 @@ if p.returncode == 0:
                          stdout=subprocess.PIPE, encoding='UTF-8')
     p.wait()
 
-    if p.returncode == 0:
-        author, _ = p.communicate()
-        author = author.replace('"', '').strip()
+if p.returncode == 0:
+    author, _ = p.communicate()
+    author = author.replace('"', '').strip()
 
-        if 'author' not in metadata:
-            metadata['author'] = author
+    if 'author' not in metadata:
+        metadata['author'] = author
 
 if "contributors" not in metadata:
     metadata["contributors"] = []
@@ -193,5 +192,5 @@ if "contributors" not in metadata:
 
 with open(data_file, 'w', encoding="utf-8") as out_f:
     toml.dump(metadata, out_f)
-    
+
 logger.info(f"Metadata written to '{os.path.join('$REPO_ROOT', 'Metadata', os.path.basename(data_file))}'")
