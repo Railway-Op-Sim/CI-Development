@@ -120,8 +120,9 @@ def get_version():
     if p.returncode != 0:
         retrieved = None
     else:
-        version = p.communicate().strip()
+        version = p.communicate()
         retrieved, _ = version
+        retrieved = retrieved.strip()
 
     version_current = metadata.get("version", None)
 
