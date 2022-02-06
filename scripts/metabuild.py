@@ -54,24 +54,22 @@ logger.info(f"Using railway name '{rly_name}'")
 data_file = os.path.join(proj_dir, 'Metadata', f'{rly_name}.toml')
 
 metadata = toml.load(data_file) if os.path.exists(data_file) else {}
+
 if 'rly_file' not in metadata:
     metadata['rly_file'] = f'{rly_name}.rly'
 
-if 'ttb_files' not in metadata:
+if 'ttb_files' not in metadata or not metadata['ttb_files']:
     ttb_files = glob.glob(os.path.join(proj_dir, 'Program_Timetables', '*.ttb'))
     if not ttb_files:
         logger.info("No timetable files were found.")
-        metadata['ttb_files'] = []
-    elif 'ttb_files' not in metadata or not metadata['ttb_files']:
-        metadata['ttb_files'] = [os.path.basename(t) for t in ttb_files]
-        logger.info(f"Found timetable files {metadata['ttb_files']}")
+    metadata['ttb_files'] = [os.path.basename(t) for t in ttb_files]
+    logger.info(f"Found timetable files {metadata['ttb_files']}")
 
 if 'ssn_files' not in metadata:
     ssn_files = glob.glob(os.path.join(proj_dir, 'Sessions', '*.ssn'))
     if not ssn_files:
         logger.info("No session files were found.")
-        metadata['ssn_files'] = []
-    elif 'ssn_files' not in metadata or not metadata['ssn_files']:
+    if 'ssn_files' not in metadata or not metadata['ssn_files']:
         metadata['ssn_files'] = [os.path.basename(s) for s in ssn_files]
         logger.info(f"Found session files {metadata['ssn_files']}")
 
@@ -99,8 +97,7 @@ if 'doc_files' not in metadata:
     doc_files = glob.glob(os.path.join(proj_dir, 'Documentation', '*'))
     if not doc_files:
         logger.info("No doc files were found.")
-        metadata['doc_files'] = []
-    elif 'doc_files' not in metadata or not metadata['doc_files']:
+    if 'doc_files' not in metadata or not metadata['doc_files']:
         metadata['doc_files'] = [os.path.basename(s) for s in doc_files]
         logger.info(f"Found doc files {metadata['doc_files']}")
 
