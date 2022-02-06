@@ -17,7 +17,7 @@ jobs:
       - name: Check Directories
         run: "Get-ChildItem ."
         shell: powershell {0}
-    
+
   ttb_checker:
     name: ROS Timetable Checker Test
     runs-on: windows-latest
@@ -26,7 +26,7 @@ jobs:
 
       - name: Unpack Checker
         run: Expand-Archive -LiteralPath 'software\TimetableChecker.zip'
-        shell: powershell 
+        shell: powershell
 
       - name: Copy Examples to Current Directory
         run: |
@@ -35,10 +35,12 @@ jobs:
 
       - name: Run Timetable Checker on Test Files
         run: .\TimetableChecker\TimetableChecker\TimetableChecker.exe
-      
+
+      - uses: actions/setup-python@v2
+
       - name: Check Output
-        run: .\scripts\ttb_check.ps1
-        shell: powershell
+        run: python ./scripts/ttb_check.py ./Output.txt
+        shell: bash
 
   test_ci_image_merge_fail:
     name: Test Docker Image - MR Fail
@@ -47,10 +49,10 @@ jobs:
       image: artemisbeta/railwayopsim-ci:latest
       env:
           DEBIAN_FRONTEND : noninteractive
-          LANG : 'en_GB.UTF-8' 
-          LANGUAGE : 'en_GB:en' 
+          LANG : 'en_GB.UTF-8'
+          LANGUAGE : 'en_GB:en'
           LC_ALL : 'en_GB.UTF-8'
-    
+
     steps:
       - uses: actions/checkout@v2
 
@@ -70,10 +72,10 @@ jobs:
              git commit -m "Development version"
              git checkout master
              cp ../test_ttbs/master.ttb timetables/test.ttb
-             git add -u 
+             git add -u
              git commit -m "Master modified version"
              git checkout dev
-      
+
       - name: Run MR Check Script
         run: |
               cd dummy_repo
@@ -86,10 +88,10 @@ jobs:
       image: artemisbeta/railwayopsim-ci:latest
       env:
           DEBIAN_FRONTEND : noninteractive
-          LANG : 'en_GB.UTF-8' 
-          LANGUAGE : 'en_GB:en' 
+          LANG : 'en_GB.UTF-8'
+          LANGUAGE : 'en_GB:en'
           LC_ALL : 'en_GB.UTF-8'
-    
+
     steps:
       - uses: actions/checkout@v2
 
@@ -109,10 +111,10 @@ jobs:
              git commit -m "Development version"
              git checkout master
              cp ../test_ttbs/master_pass.ttb timetables/test.ttb
-             git add -u 
+             git add -u
              git commit -m "Master modified version"
              git checkout dev
-      
+
       - name: Run MR Check Script
         run: |
               cd dummy_repo
