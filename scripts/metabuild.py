@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-from curses import meta
 import datetime
 import toml
 import semver
