@@ -41,7 +41,6 @@ if not os.path.exists(os.path.join(proj_dir, 'Metadata')):
     os.makedirs(os.path.join(proj_dir, 'Metadata'))
 
 rly_files = glob.glob(os.path.join(proj_dir, 'Railway', '*.rly'))
-rly_files += glob.glob(os.path.join(proj_dir, 'Railway', '*.dev'))
 
 if not rly_files:
     logger.info("No railway file found aborting.")
