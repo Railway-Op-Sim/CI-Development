@@ -105,10 +105,6 @@ if 'release_date' not in metadata:
     logger.info("Setting release date to '{release}'")
     metadata['release_date'] = release
 
-if 'factual' not in metadata:
-    metadata['factual'] = metadata['country_code'] not in ('FN', 'UN')
-
-
 def get_version():
     p = subprocess.Popen(['git', 'describe', '--abbrev=0', '--tags'], cwd=proj_dir,
                          stdout=subprocess.PIPE, encoding='UTF-8')
@@ -154,6 +150,8 @@ if re.findall(r'^(\w{2})\-', repo_name) and 'country_code' not in metadata:
     metadata['country_code'] = re.findall(r'^(\w{2})\-', repo_name)[0].upper()
     logger.info(f"Found country code '{metadata['country_code']}'")
 
+if 'factual' not in metadata and 'country_code' in metadata:
+    metadata['factual'] = metadata['country_code'] not in ('FN', 'UN')
 
 if 'description' not in metadata:
     metadata['description'] = ""
