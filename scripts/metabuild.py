@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from curses import meta
 import datetime
 import toml
 import semver
@@ -50,7 +51,12 @@ rly_name = os.path.splitext(os.path.basename(rly_files[0]))[0]
 
 logger.info(f"Using railway name '{rly_name}'")
 
-data_file = os.path.join(proj_dir, 'Metadata', f'{rly_name}.toml')
+_toml_search = glob.glob(os.path.join(proj_dir, 'Metadata', '*.toml'))
+
+if not _toml_search:
+    data_file = os.path.join(proj_dir, 'Metadata', f'{rly_name}.toml')
+else:
+    data_file = _toml_search[0]
 
 metadata = toml.load(data_file) if os.path.exists(data_file) else {}
 
@@ -64,26 +70,25 @@ if 'ttb_files' not in metadata or not metadata['ttb_files']:
     metadata['ttb_files'] = [os.path.basename(t) for t in ttb_files]
     logger.info(f"Found timetable files {metadata['ttb_files']}")
 
-if 'ssn_files' not in metadata:
+if 'ssn_files' not in metadata or not metadata["ssn_files"]:
     ssn_files = glob.glob(os.path.join(proj_dir, 'Sessions', '*.ssn'))
     if not ssn_files:
         logger.info("No session files were found.")
-    if 'ssn_files' not in metadata or not metadata['ssn_files']:
+    else:
         metadata['ssn_files'] = [os.path.basename(s) for s in ssn_files]
         logger.info(f"Found session files {metadata['ssn_files']}")
 
-if 'graphic_files' not in metadata:
+if "graphic_files" not in metadata or not metadata["graphic_files"]:
     graphic_files = glob.glob(os.path.join(proj_dir, 'Graphics', '*'))
     if not graphic_files:
         logger.info("No graphic files were found.")
-        metadata['graphic_files'] = []
     elif 'graphic_files' not in metadata or not metadata['graphic_files']:
         metadata['graphic_files'] = [os.path.basename(s) for s in graphic_files]
         logger.info(f"Found graphic files {metadata['graphic_files']}")
         if 'minimum_required' not in metadata:
             metadata['minimum_required'] = '2.4.0'
 
-if 'img_files' not in metadata:
+if "img_files" not in metadata or not metadata["img_files"]:
     img_files = glob.glob(os.path.join(proj_dir, 'Images', '*'))
     if not img_files:
         logger.info("No image files were found.")
@@ -92,7 +97,7 @@ if 'img_files' not in metadata:
         metadata['img_files'] = [os.path.basename(s) for s in img_files]
         logger.info(f"Found image files {metadata['img_files']}")
 
-if 'doc_files' not in metadata:
+if "doc_files" not in metadata or not metadata["doc_files"]:
     doc_files = glob.glob(os.path.join(proj_dir, 'Documentation', '*'))
     if not doc_files:
         logger.info("No doc files were found.")
@@ -100,7 +105,7 @@ if 'doc_files' not in metadata:
         metadata['doc_files'] = [os.path.basename(s) for s in doc_files]
         logger.info(f"Found doc files {metadata['doc_files']}")
 
-if 'release_date' not in metadata:
+if "release_date" not in metadata:
     release = datetime.datetime.now().strftime("%Y-%m-%d")
     logger.info("Setting release date to '{release}'")
     metadata['release_date'] = release
