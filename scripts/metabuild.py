@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-from curses import meta
 import datetime
 import toml
 import semver
@@ -51,13 +50,11 @@ rly_name = os.path.splitext(os.path.basename(rly_files[0]))[0]
 
 logger.info(f"Using railway name '{rly_name}'")
 
-_toml_search = glob.glob(os.path.join(proj_dir, 'Metadata', '*.toml'))
-
-if not _toml_search:
-    data_file = os.path.join(proj_dir, 'Metadata', f'{rly_name}.toml')
-else:
+if _toml_search := glob.glob(os.path.join(proj_dir, 'Metadata', '*.toml')):
     data_file = _toml_search[0]
 
+else:
+    data_file = os.path.join(proj_dir, 'Metadata', f'{rly_name}.toml')
 metadata = toml.load(data_file) if os.path.exists(data_file) else {}
 
 if 'rly_file' not in metadata:
@@ -71,13 +68,12 @@ if 'ttb_files' not in metadata or not metadata['ttb_files']:
     logger.info(f"Found timetable files {metadata['ttb_files']}")
 
 if 'ssn_files' not in metadata or not metadata["ssn_files"]:
-    ssn_files = glob.glob(os.path.join(proj_dir, 'Sessions', '*.ssn'))
-    if not ssn_files:
-        logger.info("No session files were found.")
-    else:
+    if ssn_files := glob.glob(os.path.join(proj_dir, 'Sessions', '*.ssn')):
         metadata['ssn_files'] = [os.path.basename(s) for s in ssn_files]
         logger.info(f"Found session files {metadata['ssn_files']}")
 
+    else:
+        logger.info("No session files were found.")
 if "graphic_files" not in metadata or not metadata["graphic_files"]:
     graphic_files = glob.glob(os.path.join(proj_dir, 'Graphics', '*'))
     if not graphic_files:
@@ -101,13 +97,13 @@ if "doc_files" not in metadata or not metadata["doc_files"]:
     doc_files = glob.glob(os.path.join(proj_dir, 'Documentation', '*'))
     if not doc_files:
         logger.info("No doc files were found.")
-    if 'doc_files' not in metadata or not metadata['doc_files']:
-        metadata['doc_files'] = [os.path.basename(s) for s in doc_files]
-        logger.info(f"Found doc files {metadata['doc_files']}")
+if 'doc_files' not in metadata or not metadata['doc_files']:
+    metadata['doc_files'] = [os.path.basename(s) for s in doc_files]
+    logger.info(f"Found doc files {metadata['doc_files']}")
 
 if "release_date" not in metadata:
     release = datetime.datetime.now().strftime("%Y-%m-%d")
-    logger.info("Setting release date to '{release}'")
+    logger.info(f"Setting release date to '{release}'")
     metadata['release_date'] = release
 
 def get_version():
@@ -119,22 +115,23 @@ def get_version():
     else:
         version = p.communicate()
         retrieved, _ = version
-        retrieved = retrieved.strip()
+        retrieved = retrieved.replace("v", "").strip()
 
     version_current = metadata.get("version", None)
 
     if version_current:
+        version_current = version_current.replace("v", "")
         try:
-            semver_current = semver.VersionInfo(version_current)
-        except ValueError:
-            logger.error("Current version tag is not a valid semantic version, setting to 1.0.0")
+            semver_current = semver.VersionInfo.parse(version_current)
+        except ValueError as e:
+            logger.error(f"Current version tag '{version_current}' is not a valid semantic version, setting to 1.0.0")
             metadata["version"] = "1.0.0"
             return
     if retrieved:
         try:
-            semver_retr = semver.VersionInfo(retrieved)
+            semver_retr = semver.VersionInfo.parse(retrieved)
         except ValueError:
-            logger.error("Retrieved version tag is not a valid semantic version, using current")
+            logger.error(f"Retrieved version tag '{retrieved}' is not a valid semantic version, using current")
             metadata["version"] = version_current
             return
 
