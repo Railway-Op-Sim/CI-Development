@@ -1,7 +1,7 @@
-FROM ubuntu:latest
+FROM python:latest
 RUN apt update -y
 RUN apt upgrade -y
-RUN apt install python3 python3-pip git -y
+RUN apt install git -y
 RUN python3 -m pip install gitpython tabulate typing toml semver
 COPY scripts/git_merge_ttb.py /etc/git_merge_ttb
 COPY scripts/metabuild.py /etc/metabuild

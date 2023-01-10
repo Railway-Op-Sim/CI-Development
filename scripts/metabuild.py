@@ -158,12 +158,18 @@ if 'factual' not in metadata and 'country_code' in metadata:
 if 'description' not in metadata:
     metadata['description'] = ""
 
+if 'year' not in metadata:
+    metadata['year'] = int(datetime.datetime.now().strftime("%Y"))
+
 if 'display_name' not in metadata:
     metadata['display_name'] = repo_name.split('-', 1)[1].replace('-', ' ').title()
     logger.info(f"Set display name '{metadata['display_name']}'")
 
 if 'name' not in metadata:
     metadata['name'] = metadata['display_name']
+
+if 'signal_position' not in metadata:
+    metadata['signal_position'] = 'left'
 
 p = subprocess.Popen(['git', 'rev-list', '--max-parents=0', 'HEAD'], cwd=proj_dir, stdout=subprocess.PIPE,
                      encoding='UTF-8')
