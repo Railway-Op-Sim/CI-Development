@@ -8,7 +8,7 @@ import git
 import sys
 
 import glob
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 
 logging.basicConfig()
@@ -114,7 +114,7 @@ class GitTTBMerge(object):
         self._repository = git.Repo(os.getcwd())
         if self._repository.head.is_detached:
             self._checkout_temp()
-        self._current_branch = branch_name if branch_name else self._repository.active_branch.name
+        self._current_branch = branch_name or self._repository.active_branch.name
         if self._current_branch == 'master':
             print("Current branch is 'master', no tests will be run")
             exit(0)
@@ -143,7 +143,7 @@ class GitTTBMerge(object):
         if _user == "Automated Commit: ROS CI":
             print("Latest commit is automated, cancelling run.")
             exit(0)
-            
+
 
     def _unpack_ttb(self) -> str:
         if not os.path.exists(self._ttb_file):
@@ -154,9 +154,9 @@ class GitTTBMerge(object):
         with open(self._ttb_file) as f:
             _line = f.readlines()[0]
 
-        _lines = '\n'.join([i+'NULL' for i in _line.split('\x00')])
+        _lines = '\n'.join([f'{i}NULL' for i in _line.split('\x00')])
 
-        return '\n'.join([i+'COMMA' for i in _lines.split(',')])
+        return '\n'.join([f'{i}COMMA' for i in _lines.split(',')])
 
     def _get_source_node_commit(self,
                                 master_branch: Optional[str] = 'master') -> str:
@@ -189,12 +189,11 @@ class GitTTBMerge(object):
 
     def _rebuild(self, output_str: str) -> str:
         output_str = output_str.replace('NULL', '\x00').replace('COMMA', ',')
-        output_str = output_str.replace('\n','')
-        return output_str
+        return output_str.replace('\n','')
 
     def attempt_merge(self):
         self._checkout_commit_to_branch(self._get_source_node_commit())
-        
+
         # Need to handle case where there is no timetable on master yet!
         try:
             master = self._get_version('master')
@@ -213,14 +212,14 @@ class GitTTBMerge(object):
         with GitRepo() as g:
             with open('temp.ttb', 'w') as f:
                 f.write(_versions['fork'])
-                
+
             g.commit('Initial version before divergence')
 
             g.switch_branch('dev', new=True)
 
             with open('temp.ttb', 'w') as f:
                 f.write(_versions['dev'])
-            
+
             g.commit('Development updates applied')
 
             g.switch_branch('master')
@@ -247,8 +246,8 @@ class GitTTBMerge(object):
             _result += '\n\n**Differences**\n```diff\n' + _diff + "\n```\n\n"
             f.write(_result)
 
-        if _return_status == 0 and not self._no_overwrite:
-            with open(self._ttb_file, 'w') as f:
+        if _return_status == 0:
+            with open(f'merge_test_{self._ttb_file}' if self._no_overwrite else self._ttb_file, 'w') as f:
                 f.write(self._rebuild(_output))
                 subprocess.call(['git', 'config', 'user.name',
                                  '"github-actions"'])
@@ -264,7 +263,7 @@ class GitTTBMerge(object):
                                 stdout=open(os.devnull, 'wb'))
 
         sys.exit(_return_status)
-         
+
 
 if __name__ in "__main__":
     import argparse
@@ -284,5 +283,5 @@ if __name__ in "__main__":
     _soft = args.soft
 
     for f in glob.glob(os.path.join(_loc, '*.ttb')):
-        print("Processing file '{}':".format(f))
+        print(f"Processing file '{f}':")
         GitTTBMerge(f, _branch, _soft).attempt_merge()

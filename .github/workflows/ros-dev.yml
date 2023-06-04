@@ -1,11 +1,11 @@
-name: ROSCIDev
+name: RailOS CI
 on: [push]
 jobs:
   ci-test:
-    name: ROS Full Application Test
+    name: RailOS Full Application Test
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Download Latest Release
         run: .\scripts\test.ps1
@@ -18,35 +18,15 @@ jobs:
         run: "Get-ChildItem ."
         shell: powershell {0}
 
-  ttb_checker:
-    name: ROS Timetable Checker Test
+  docker_build:
+    name: Build Docker Image
     runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Unpack Checker
-        run: Expand-Archive -LiteralPath 'software\TimetableChecker.zip'
-        shell: powershell
-
-      - name: Copy Examples to Current Directory
-        run: |
-              Copy-Item -Path 'test_ttbs\master.ttb' 'test.ttb'
-              Copy-Item -Path 'test_rlys\railway.rly' 'railway.rly'
-
-      - name: Run Timetable Checker on Test Files
-        run: .\TimetableChecker\TimetableChecker\TimetableChecker.exe
-
-      - uses: actions/setup-python@v2
-
-      - name: Check Output
-        run: python ./scripts/ttb_check.py ./Output.txt
-        shell: bash
 
   test_ci_image_merge_fail:
     name: Test Docker Image - MR Fail
     runs-on: ubuntu-latest
     container:
-      image: artemisbeta/railwayopsim-ci:latest
+      image: artemisbeta/railwayopsim-ci:dev
       env:
           DEBIAN_FRONTEND : noninteractive
           LANG : 'en_GB.UTF-8'
@@ -54,7 +34,7 @@ jobs:
           LC_ALL : 'en_GB.UTF-8'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Create Dummy Repository
         run: |
@@ -85,7 +65,7 @@ jobs:
     name: Test Docker Image - MR Pass
     runs-on: ubuntu-latest
     container:
-      image: artemisbeta/railwayopsim-ci:latest
+      image: artemisbeta/railwayopsim-ci:dev
       env:
           DEBIAN_FRONTEND : noninteractive
           LANG : 'en_GB.UTF-8'
@@ -93,7 +73,7 @@ jobs:
           LC_ALL : 'en_GB.UTF-8'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Create Dummy Repository
         run: |
@@ -119,3 +99,7 @@ jobs:
         run: |
               cd dummy_repo
               git_merge_ttb --soft --ttb-path . dev
+      - name: File Existence
+        uses: andstor/file-existence-action@v2.0.0
+        with:
+            files: "merge_check_test.ttb"
