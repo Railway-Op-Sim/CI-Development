@@ -18,10 +18,6 @@ jobs:
         run: "Get-ChildItem ."
         shell: powershell {0}
 
-  docker_build:
-    name: Build Docker Image
-    runs-on: windows-latest
-
   test_ci_image_merge_fail:
     name: Test Docker Image - MR Fail
     runs-on: ubuntu-latest
